@@ -171,7 +171,7 @@ function dbsideload_check_sideload($post_id) {
 	if (!empty($_POST['submit']) && !empty($_POST['dropboxfiles'])) {
 
 		// necessary for old ssl certs
-		//add_filter('https_ssl_verify','__return_false');
+		add_filter('https_ssl_verify','__return_false');
 
 		$dbfiles = (array) $_POST['dropboxfiles'];
 		echo '<ul>';		
