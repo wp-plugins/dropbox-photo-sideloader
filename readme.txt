@@ -12,31 +12,42 @@ License URI: http://www.opensource.org/licenses/GPL-2.0
 
 Adds a new tab to the Add media screen, allowing you to pull images from Dropbox into WordPress.
 
-Note: Read the installation instructions. This is an early-release plugin, it requires manual configuration (editing the code) for the moment.
+"Sideloading" is a term given to differeniate from "uploading" or "downloading". When you sideload an image, you're copying it directly from Dropbox to WordPress. So if you keep your images in Dropbox, this plugin allows you to easily copy those images into WordPress, for usage however you like.
+
+After sideloading an image into WordPress, you'll find it in the Media Library and available for use in Galleries on the Post, whatever you like.
+
+Note that sideloading many images at once may take more time than your webserver will allow. If this happens, just sideload them in smaller groups.
 
 
 Credit:
-This plugin uses the Dropbox PHP code from https://github.com/Dropbox-PHP/dropbox-php.
+This plugin uses the Dropbox PHP code (albeit modified slightly) from https://github.com/Dropbox-PHP/dropbox-php.
 
 
 == Installation ==
 
 Setup:
 
+* Install the plugin.
+* Create a new post (or edit an old one), and click the Upload Media icon.
+* In the uploader popup, click the new "Dropbox Images" tab on the right.
+* If you're logged in as an administrator, you'll find configuration instructions. These only need to be followed one time.
+
+Those configuration instructions are reproduced here, for clarity.
+
 * Visit https://www.dropbox.com/developers/apps and Click "Create an App".
 * Give it a name and description.
 * Select "Full Dropbox" so that it can access all your files.
-* After the app has been created, copy the App Key and App Secret into the plugin (you will need to edit the plugin to do this)
+* After the app has been created, copy the App Key and App Secret into the plugin config screen.
 * Note: You can leave the App in "Development" status unless more people than just you need to access their Dropboxes using the plugin.
-
-Once you've setup the application, go create a new post (or edit an old one) and go to the Add Image popup screen. You'll find a new tab on the right called "Dropbox Images", where you'll find an interface to browse your Dropbox and select images for Sideloading into WordPress.
 
 
 == Frequently Asked Questions ==
 
 = Why does it look so simplistic and ugly? =
 
-First version. C'mon.
+It's a new plugin. C'mon.
+
+That said, any nice file-like browsing and selection Javascript library suggestions would be most appreciated. :)
 
 
 == Screenshots ==
@@ -47,8 +58,17 @@ First version. C'mon.
 
 == Upgrade Notice ==
 
+= 0.2 =
+
+The plugin now has a configuration screen for the Dropbox App information. You will need to reconfigure the plugin (just copy/paste the keys, not edit the plugin again).
+
 
 == Changelog ==
+
+= 0.2 =
+
+* Fix issues with spaces and other url-encoded characters in image filenames not being sideloaded properly.
+* Add config screen
 
 = 0.1 =
 

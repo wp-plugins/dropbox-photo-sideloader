@@ -3,23 +3,19 @@
 Plugin Name: Dropbox Photo Sideloader
 Plugin URI: http://ottopress.com/wordpress-plugins/dropbox-photo-sideloader/
 Description: Adds a new tab to the Media Uploader, which allows you to pull image files from your Dropbox into WordPress.
-Version: 0.1
+Version: 0.2
 Author: Otto
 Author URI: http://ottopress.com
 License: GPLv2
 License URI: http://www.opensource.org/licenses/GPL-2.0
 */
 
-
-
+/*
+// These aren't needed anymore, but you can use them in your wp-config.php if you want to skip the configuration steps in the plugin screen.
 
 define('DROPBOX_KEY', 		'put your dropbox app key in here');
 define('DROPBOX_SECRET', 	'put your dropbox app secret in here');
-
-
-
-
-
+*/
 
 add_action('init','dbsideload_init');
 function dbsideload_init() {
@@ -29,9 +25,16 @@ function dbsideload_init() {
 	require_once 'Dropbox/API.php';
 
 	global $dbsideload_oauth, $dropbox;
-
-	$dbsideload_oauth = new Dropbox_OAuth_Wordpress(DROPBOX_KEY, DROPBOX_SECRET);
-	$dropbox = new Dropbox_API($dbsideload_oauth);
+	
+	$options = get_option('dbsideload');
+	
+	if (defined('DROPBOX_KEY')) $options['key'] = DROPBOX_KEY;
+	if (defined('DROPBOX_SECRET')) $options['secret'] = DROPBOX_SECRET;
+	
+	if (!empty($options['key']) && !empty($options['secret'])) {
+		$dbsideload_oauth = new Dropbox_OAuth_Wordpress($options['key'], $options['secret']);
+		$dropbox = new Dropbox_API($dbsideload_oauth);
+	}
 
 	global $wp;
 	$wp->add_query_var('dbsideloadoauth');
@@ -130,6 +133,35 @@ function toggleChecked(status) { jQuery(".dropboxfile").each( function() { jQuer
 function dbsideload_check_auth() {
 	global $dbsideload_oauth, $dropbox;
 	
+	// regular user
+	if (empty($dropbox) && !current_user_can('manage_options')) {
+		echo 'Dropbox does not appear to be configured yet. Have your site administrator configure the Dropbox Photo Sideloader Plugin.';
+		return false;
+	}
+
+	// admin user
+	if (empty($dropbox) && current_user_can('manage_options') && dbsideload_check_setup() == false) {
+		
+		$options = get_option('dbsideload');
+		if (empty($options['key'])) $options['key']=='';
+		if (empty($options['secret'])) $options['secret']=='';
+	?>
+		<p>To configure the Dropbox Photo Sideloader plugin, you'll need to do a few steps first.</p>
+		<ol>
+		<li>Visit <a href="https://www.dropbox.com/developers/apps" target="_blank">https://www.dropbox.com/developers/apps</a> and Click "Create an App". <br>(You'll need to have a Dropbox account to do this.)</li>
+		<li>Give it a name and description. This will be displayed to users when they authorize Dropbox to talk to this website.</li>
+		<li>Select "Full Dropbox" so that the plugin can access all of the user's files (for finding the images they want to upload).</li>
+		<li>After the app has been created, copy the App Key and App Secret into the boxes below, and Save.</li>
+		<li>Note: You can leave the App in "Development" status on Dropbox, unless other people than you need to access their own Dropboxes using the plugin. Nobody will be able to access the Dropbox of another person using this plugin, only their own.</li>
+		</ol>
+		<p>Dropbox App Key: <input type='text' name='dbsideload[key]' value='<?php esc_attr_e($options['key']); ?>'></input></p>
+		<p>Dropbox App Secret: <input type='text' name='dbsideload[secret]' value='<?php esc_attr_e($options['secret']); ?>'></input></p>
+		<?php
+		wp_nonce_field('dbsideload-setup');
+		submit_button('Save Dropbox App Settings');
+		return false;
+	}
+	
 	$user = wp_get_current_user();
 	
 	$tokens = get_user_meta($user->ID, 'dbsideload_tokens', true);
@@ -165,6 +197,24 @@ function dbsideload_check_auth() {
 	return false;
 }
 
+function dbsideload_check_setup() {
+	global $dbsideload_oauth, $dropbox;
+	
+	if (!empty($_POST['submit']) && !empty($_POST['dbsideload']['key'])) {
+		check_admin_referer('dbsideload-setup');
+		
+		$options=$_POST['dbsideload'];
+
+		$dbsideload_oauth = new Dropbox_OAuth_Wordpress($options['key'], $options['secret']);
+		$dropbox = new Dropbox_API($dbsideload_oauth);
+
+		update_option('dbsideload',$options);
+		
+		return true;
+	}
+	return false;
+}
+
 function dbsideload_check_sideload($post_id) {
 	global $dropbox;
 
@@ -178,7 +228,7 @@ function dbsideload_check_sideload($post_id) {
 		foreach($dbfiles as $file) {
 			echo "<li>Sideloading {$file} ... ";
 			$tempurl = $dropbox->media($file);
-			$result = media_sideload_image($tempurl['url'], $post_id);
+			$result = media_sideload_image(urldecode($tempurl['url']), $post_id);
 			if (is_wp_error($result)) {
 				echo 'Error when sideloading.<br />';
 				echo $result->get_error_message();
