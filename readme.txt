@@ -12,9 +12,9 @@ License URI: http://www.opensource.org/licenses/GPL-2.0
 
 Adds a new tab to the Add media screen, allowing you to pull images from Dropbox into WordPress.
 
-"Sideloading" is a term given to differeniate from "uploading" or "downloading". When you sideload an image, you're copying it directly from Dropbox to WordPress. So if you keep your images in Dropbox, this plugin allows you to easily copy those images into WordPress, for usage however you like.
+"Sideloading" is a term given to differeniate from "uploading" or "downloading". When you sideload an image, you're copying it directly from Dropbox to WordPress. So if you keep your images in Dropbox, this plugin allows you to easily copy those images into WordPress.
 
-After sideloading an image into WordPress, you'll find it in the Media Library and available for use in Galleries on the Post, whatever you like.
+After sideloading an image into WordPress, you'll find it in the Media Library and available for use in Galleries, or as images in the Post, or just whatever you like. It's just as if you uploaded them manually.
 
 Note that sideloading many images at once may take more time than your webserver will allow. If this happens, just sideload them in smaller groups.
 
