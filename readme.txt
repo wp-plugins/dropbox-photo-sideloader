@@ -1,5 +1,5 @@
 === Dropbox Photo Sideloader === 
-Contributors: audrey, Otto42
+Contributors: Audrey, Otto42
 Tags: dropbox, sideload, image, photo, media
 Requires at least: 3.4
 Tested up to: 3.4
