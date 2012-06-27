@@ -1,6 +1,5 @@
 === Dropbox Photo Sideloader === 
-Contributors: Otto42
-Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=otto%40ottodestruct%2ecom
+Contributors: audrey, Otto42
 Tags: dropbox, sideload, image, photo, media
 Requires at least: 3.4
 Tested up to: 3.4
