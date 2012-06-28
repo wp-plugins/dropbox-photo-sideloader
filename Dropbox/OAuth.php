@@ -118,7 +118,7 @@ abstract class Dropbox_OAuth {
         
         // Building the redirect uri
         $token = $this->getToken();
-        $uri = self::URI_AUTHORIZE . '?oauth_token=' . $token['token'];
+        $uri = self::URI_AUTHORIZE . '?display=mobile&oauth_token=' . $token['token'];
         if ($callBack) $uri.='&oauth_callback=' . $callBack;
         return $uri;
     }
