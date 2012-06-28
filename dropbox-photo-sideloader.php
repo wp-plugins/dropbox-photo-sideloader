@@ -3,7 +3,7 @@
 Plugin Name: Dropbox Photo Sideloader
 Plugin URI: http://ottopress.com/wordpress-plugins/dropbox-photo-sideloader/
 Description: Adds a new tab to the Media Uploader, which allows you to pull image files from your Dropbox into WordPress.
-Version: 0.2
+Version: 0.3
 Author: Otto
 Author URI: http://ottopress.com
 License: GPLv2
@@ -133,6 +133,11 @@ function toggleChecked(status) { jQuery(".dropboxfile").each( function() { jQuer
 function dbsideload_check_auth() {
 	global $dbsideload_oauth, $dropbox;
 	
+	if (!wp_http_supports(array('ssl'=>true))) {
+		echo '<p>This system does not appear to support making web connections via HTTPS/SSL. This support is required for the Dropbox Photo Sideloader plugin.</p><p>Suggested fix: Have your administrator install "curl" support on the PHP installation.</p>';
+		return false;
+	}
+	
 	// regular user
 	if (empty($dropbox) && !current_user_can('manage_options')) {
 		echo 'Dropbox does not appear to be configured yet. Have your site administrator configure the Dropbox Photo Sideloader Plugin.';
@@ -143,8 +148,13 @@ function dbsideload_check_auth() {
 	if (empty($dropbox) && current_user_can('manage_options') && dbsideload_check_setup() == false) {
 		
 		$options = get_option('dbsideload');
-		if (empty($options['key'])) $options['key']=='';
-		if (empty($options['secret'])) $options['secret']=='';
+		if (empty($options['key'])) $options['key'] = '';
+		if (empty($options['secret'])) $options['secret'] = '';
+		
+		if (!empty($_POST['dbsideload']['key'])) {
+			$options['key'] = $_POST['dbsideload']['key'];
+			$options['secret'] = $_POST['dbsideload']['secret'];
+		}
 	?>
 		<p>To configure the Dropbox Photo Sideloader plugin, you'll need to do a few steps first.</p>
 		<ol>
@@ -178,7 +188,10 @@ function dbsideload_check_auth() {
 		}
 	}
 	
-	$tokens = $dbsideload_oauth->getRequestToken();
+	global $dbsideload_oauth_tokens;
+	if (isset($dbsideload_oauth_tokens)) $tokens = $dbsideload_oauth_tokens;
+	else $tokens = $dbsideload_oauth->getRequestToken();
+	
 	$tokens['type'] = 'request';		
 	update_user_meta($user->ID, 'dbsideload_tokens', $tokens);
 	$url = $dbsideload_oauth->getAuthorizeUrl(home_url('?dbsideloadoauth=1'));
@@ -206,8 +219,26 @@ function dbsideload_check_setup() {
 		$options=$_POST['dbsideload'];
 
 		$dbsideload_oauth = new Dropbox_OAuth_Wordpress($options['key'], $options['secret']);
+		
+		// try to get a request token, to test the key and secret
+		$error='';
+		try {
+			$tokens = $dbsideload_oauth->getRequestToken();
+			
+			// save the token for later, so we don't have to re-request it
+			global $dbsideload_oauth_tokens;
+			$dbsideload_oauth_tokens = $tokens;
+		} catch (Exception $e) {
+			$error = $e->getMessage();
+		}
+		
+		if ($error) {
+			echo "<div class='error'>{$error}</div>";
+			return false;
+		}
+		
 		$dropbox = new Dropbox_API($dbsideload_oauth);
-
+		
 		update_option('dbsideload',$options);
 		
 		return true;

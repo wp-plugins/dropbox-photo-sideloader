@@ -57,12 +57,13 @@ That said, any nice file-like browsing and selection Javascript library suggesti
 
 == Upgrade Notice ==
 
-= 0.2 =
-
-The plugin now has a configuration screen for the Dropbox App information. You will need to reconfigure the plugin (just copy/paste the keys, not edit the plugin again).
-
-
 == Changelog ==
+
+= 0.3 =
+
+* Add error handling and error checking to the setup process (test for an invalid key/secret before saving them).
+* Change to use mobile version of the auth screen (looks better, IMO)
+* Add check for HTTPS/SSL support (Dropbox requires it, won't work without it).
 
 = 0.2 =
 
