@@ -261,8 +261,10 @@ function dbsideload_check_sideload($post_id) {
 		$dbfiles = (array) $_POST['dropboxfiles'];
 		echo '<ul>';		
 		foreach($dbfiles as $file) {
-			echo "<li>Sideloading {$file} ... ";
 			$tempurl = $dropbox->media($file);
+			if (!isset($tempurl['url'])) continue;
+			
+			echo "<li>Sideloading {$file} ... ";
 			$result = media_sideload_image(urldecode($tempurl['url']), $post_id);
 			if (is_wp_error($result)) {
 				echo 'Error when sideloading.<br />';
