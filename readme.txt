@@ -61,6 +61,10 @@ So if you don't see the loading message appear and then have the directory struc
 
 == Changelog ==
 
+= 0.4 =
+
+* Add new jsTree based file browsing and image icons.
+
 = 0.3 =
 
 * Add error handling and error checking to the setup process (test for an invalid key/secret before saving them).
