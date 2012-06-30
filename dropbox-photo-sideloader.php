@@ -403,9 +403,9 @@ function dbsideload_ajax_get_dir() {
 
 	if (!empty($files)) {
 		foreach($files as $file) {
-			if (!preg_match('/[^\?]+\.(jpg|JPG|jpe|JPE|jpeg|JPEG)/', $file['path'])) $type = 'jpg';
-			else if (!preg_match('/[^\?]+\.(png|PNG)/', $file['path'])) $type = 'png';
-			else if (!preg_match('/[^\?]+\.(gif|GIF)/', $file['path'])) $type = 'gif';
+			if (preg_match('/[^\?]+\.(jpg|JPG|jpe|JPE|jpeg|JPEG)/', $file['path'])) $type = 'jpg';
+			else if (preg_match('/[^\?]+\.(png|PNG)/', $file['path'])) $type = 'png';
+			else if (preg_match('/[^\?]+\.(gif|GIF)/', $file['path'])) $type = 'gif';
 			
 			$data[] = array(
 				'attr'=>array('rel'=>$type, 'id'=>$file['path']),
