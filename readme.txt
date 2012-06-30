@@ -18,8 +18,11 @@ After sideloading an image into WordPress, you'll find it in the Media Library a
 Note that sideloading many images at once may take more time than your webserver will allow. If this happens, just sideload them in smaller groups.
 
 
-Credit:
-This plugin uses the Dropbox PHP code (albeit modified slightly) from https://github.com/Dropbox-PHP/dropbox-php.
+Credits:
+
+* This plugin uses the Dropbox PHP code (albeit modified slightly) from https://github.com/Dropbox-PHP/dropbox-php.
+* This plugin uses the jsTree Javascript library from http://www.jstree.com/.
+* The three image icons come from the Lullacon Pack 1: http://www.lullabot.com/articles/free-gpl-icons-lullacons-pack-1
 
 
 == Installation ==
@@ -42,12 +45,11 @@ Those configuration instructions are reproduced here, for clarity.
 
 == Frequently Asked Questions ==
 
-= Why does it look so simplistic and ugly? =
+= I just see a blank screen with a Sideload button on the Dropbox Images tab =
 
-It's a new plugin. C'mon.
+As of version 0.4, the Dropbox listing is displayed using Javascript and loaded via AJAX requests. This makes navigation simpler and faster. 
 
-That said, any nice file-like browsing and selection Javascript library suggestions would be most appreciated. :)
-
+So if you don't see the loading message appear and then have the directory structure loaded for you, then something else may be interfering with the javascript on the page. Try disabling other plugins and/or switching to the default theme and seeing if it works there.
 
 == Screenshots ==
 

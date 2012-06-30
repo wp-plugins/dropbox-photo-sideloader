@@ -3,7 +3,7 @@
 Plugin Name: Dropbox Photo Sideloader
 Plugin URI: http://ottopress.com/wordpress-plugins/dropbox-photo-sideloader/
 Description: Adds a new tab to the Media Uploader, which allows you to pull image files from your Dropbox into WordPress.
-Version: 0.3
+Version: 0.4
 Author: Otto
 Author URI: http://ottopress.com
 License: GPLv2
@@ -55,12 +55,13 @@ function dbsideload_photos_tab() {
 
 function media_dbsideload_photos_form($errors) {
 	global $redir_tab, $dropbox, $type, $tab;
+		
 	$redir_tab = 'dbsideloadphotos';
 
 	media_upload_header();
 
 	$post_id = intval($_REQUEST['post_id']);
-	
+		
 	$path = '/';
 	if (!empty($_REQUEST['dropboxpath'])) $path = $_REQUEST['dropboxpath'];
 	
@@ -74,9 +75,12 @@ function media_dbsideload_photos_form($errors) {
 		echo '</form>';
 		return;
 	}
-	
+
 	dbsideload_check_sideload($post_id);
 
+	dbsideload_jstree();
+	
+/*
 	$folder = $dropbox->getMetaData($path);
 	
 	$dirs = array();
@@ -120,11 +124,12 @@ function toggleChecked(status) { jQuery(".dropboxfile").each( function() { jQuer
 			echo "<li><input type='checkbox' class='dropboxfile' name='dropboxfiles[]' value='{$file['path']}'></input> {$file['path']}</li>";
 		}
 		echo '</ul>';
-		
-		submit_button('Sideload these images');
 	} else {
 		echo '<ul><li>No image files found in this Dropbox directory.</li></ul>';
 	}
+	*/
+	
+	submit_button('Sideload these images');
 ?>
 </form>
 <?php
@@ -250,7 +255,6 @@ function dbsideload_check_sideload($post_id) {
 	global $dropbox;
 
 	if (!empty($_POST['submit']) && !empty($_POST['dropboxfiles'])) {
-
 		// necessary for old ssl certs
 		add_filter('https_ssl_verify','__return_false');
 
@@ -298,3 +302,146 @@ window.close();
 		exit;
 	}
 }
+
+function dbsideload_jstree() {
+	wp_enqueue_script('jquery-jstree', plugins_url('/js/jquery.jstree.js',__FILE__), array('jquery'), '1.0-rc3');
+
+	$config = array();
+	
+	$config['themes'] = array ('theme'=>'classic');
+	
+	$config['checkbox'] = array(
+		'real_checkboxes'=>true,
+		'real_checkboxes_names'=>"function(n) {
+			return ['dropboxfiles[]', n[0].id]; 
+		}",
+	);
+	
+	$config['types'] = array('types'=>array(
+		'gif' => array(
+			'icon'=>array('image'=>plugins_url('/i/doc-type-gif.png',__FILE__))
+		),
+		'jpg' => array(
+			'icon'=>array('image'=>plugins_url('/i/doc-type-jpg.png',__FILE__))
+		),
+		'png' => array(
+			'icon'=>array('image'=>plugins_url('/i/doc-type-png.png',__FILE__))
+		),
+	));
+
+	$config['json_data'] = array (
+		'ajax' => array(
+			'url'=>admin_url( 'admin-ajax.php' ),
+			'type'=>'POST',
+			'data'=>"function(n) {
+					return {
+						action: 'dbsideload_get_dir',
+						path: n.attr ? n.attr('id') : 0
+					};
+				}"
+		)
+	);
+	
+	$config['plugins'] = array('themes','json_data','ui','types','checkbox');
+
+	?>
+	<div id="dropboxtree">
+	<noscript><p>If you're seeing this, then you have Javascript disabled. Please enable Javascript.</p></noscript>
+	</div>
+	
+	<script type="text/javascript">
+	jQuery(document).ready( function() {
+		jQuery("#dropboxtree").jstree(<?php echo dbsideload_json_encode_jsfunc($config); ?>);
+	});
+	</script>
+	<?php
+
+}
+
+add_action('wp_ajax_dbsideload_get_dir', 'dbsideload_ajax_get_dir');
+
+function dbsideload_ajax_get_dir() {
+	global $dbsideload_oauth, $dropbox;
+	
+	$user = wp_get_current_user();
+	
+	$tokens = get_user_meta($user->ID, 'dbsideload_tokens', true);
+	
+	if ( $tokens['type'] == 'auth' ) {
+		$dbsideload_oauth->setToken($tokens);
+	} else {
+		exit;
+	}
+
+	if (empty($_POST['path'])) $_POST['path'] = '/';
+	$path = $_POST['path'];
+	
+	$folder = $dropbox->getMetaData($path);
+
+	$dirs = array();
+	$files = array();
+
+	$data = array();
+	
+	foreach ($folder['contents'] as $item) {
+		if ($item['is_dir']) $dirs[] = $item;
+		else if (!preg_match('/[^\?]+\.(jpg|JPG|jpe|JPE|jpeg|JPEG|gif|GIF|png|PNG)/', $item['path'])) continue; //only show images
+		else $files[] = $item;
+	}
+
+	if (!empty($dirs)) {
+		foreach($dirs as $dir) {
+			$data[] = array(
+				'attr'=>array('id'=>$dir['path']),
+				'data'=>array(
+					'title'=>$dir['path']
+					),
+				'state'=>'closed',
+			);
+		}
+	}
+
+	if (!empty($files)) {
+		foreach($files as $file) {
+			if (!preg_match('/[^\?]+\.(jpg|JPG|jpe|JPE|jpeg|JPEG)/', $file['path'])) $type = 'jpg';
+			else if (!preg_match('/[^\?]+\.(png|PNG)/', $file['path'])) $type = 'png';
+			else if (!preg_match('/[^\?]+\.(gif|GIF)/', $file['path'])) $type = 'gif';
+			
+			$data[] = array(
+				'attr'=>array('rel'=>$type, 'id'=>$file['path']),
+				'data'=>array(
+					'title'=>$file['path'],
+				),
+			);
+		}
+	}
+
+	echo json_encode($data);
+	exit;
+}
+
+// function that creates json_encoded outputs but leaves inlined JS functions alone
+function dbsideload_json_encode_jsfunc($input=array(), $funcs=array(), $level=0) { 
+	foreach($input as $key=>$value) { 
+		if (is_array($value)) { 
+			$ret = dbsideload_json_encode_jsfunc($value, $funcs, 1); 
+			$input[$key]=$ret[0]; 
+			$funcs=$ret[1]; 
+		} else {
+			if (substr($value,0,8)=='function') { 
+				$func_key="#".uniqid()."#"; 
+				$funcs[$func_key]=$value; 
+				$input[$key]=$func_key; 
+			} 
+		} 
+	} 
+	if ($level==1) { 
+		return array($input, $funcs); 
+	} else { 
+		$input_json = json_encode($input); 
+		foreach($funcs as $key=>$value) { 
+			$input_json = str_replace('"'.$key.'"', $value, $input_json); 
+		} 
+		return $input_json; 
+	} 
+} 
