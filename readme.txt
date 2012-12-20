@@ -2,7 +2,7 @@
 Contributors: Audrey, Otto42
 Tags: dropbox, sideload, image, photo, media
 Requires at least: 3.4
-Tested up to: 3.4
+Tested up to: 3.5
 Stable Tag: trunk
 License: GPLv2
 License URI: http://www.opensource.org/licenses/GPL-2.0
@@ -42,7 +42,7 @@ Those configuration instructions are reproduced here, for clarity.
 * After the app has been created, copy the App Key and App Secret into the plugin config screen.
 * Note: You can leave the App in "Development" status unless more people than just you need to access their Dropboxes using the plugin.
 
-
+ 
 == Frequently Asked Questions ==
 
 = I just see a blank screen with a Sideload button on the Dropbox Images tab =
@@ -57,13 +57,15 @@ So if you don't see the loading message appear and then have the directory struc
 2. Files ready for sideloading
 
 == Upgrade Notice ==
+Added new preview box in the media uploader for WordPress 3.5 users.
 
 == Changelog ==
 
 = 0.5 =
 
-* Add preview panel on the right hand side of the screen for WordPress 3.5 users.
-
+* Add preview panel on the right hand side of the screen for WordPress 3.5 users (who now have a bit of extra width to play with)
+* Fixed ordering of directories and items
+* Added uninstall script to remove the dbsideload settings on uninstall
 
 = 0.4 =
 
