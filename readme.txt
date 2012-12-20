@@ -56,10 +56,14 @@ So if you don't see the loading message appear and then have the directory struc
 1. Authorization screen
 2. Files ready for sideloading
 
-
 == Upgrade Notice ==
 
 == Changelog ==
+
+= 0.5 =
+
+* Add preview panel on the right hand side of the screen for WordPress 3.5 users.
+
 
 = 0.4 =
 

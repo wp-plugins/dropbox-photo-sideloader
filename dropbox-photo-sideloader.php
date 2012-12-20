@@ -3,7 +3,7 @@
 Plugin Name: Dropbox Photo Sideloader
 Plugin URI: http://ottopress.com/wordpress-plugins/dropbox-photo-sideloader/
 Description: Adds a new tab to the Media Uploader, which allows you to pull image files from your Dropbox into WordPress.
-Version: 0.4
+Version: 0.5
 Author: Otto
 Author URI: http://ottopress.com
 License: GPLv2
@@ -80,55 +80,6 @@ function media_dbsideload_photos_form($errors) {
 
 	dbsideload_jstree();
 	
-/*
-	$folder = $dropbox->getMetaData($path);
-	
-	$dirs = array();
-	$files = array();
-	
-	foreach ($folder['contents'] as $item) {
-		if ($item['is_dir']) $dirs[] = $item;
-		else if (!preg_match('/[^\?]+\.(jpg|JPG|jpe|JPE|jpeg|JPEG|gif|GIF|png|PNG)/', $item['path'])) continue; //only show images
-		else $files[] = $item;
-	}
-	
-	if ($path != '/') {
-		$args = $_GET;
-		$url = admin_url('media-upload.php');
-		$args['dropboxpath'] = dirname($path);
-		if (DIRECTORY_SEPARATOR == '\\') $args['dropboxpath'] = str_replace(DIRECTORY_SEPARATOR, '/', $args['dropboxpath']);
-		$url = add_query_arg( $args, $url );
-		echo "<p><a href='{$url}'>Go Up a Directory</a></p>";
-	}
-
-	if (!empty($dirs)) {
-		echo '<ul>';
-		foreach($dirs as $dir) {
-			$args = $_GET;
-			$url = admin_url('media-upload.php');
-			$args['dropboxpath'] = $dir['path'];
-			$url = add_query_arg( $args, $url );
-			echo "<li><a href='{$url}'>{$dir['path']}</a></li>";
-		}
-		echo '</ul>';
-	}
-	
-	if (!empty($files)) {
-		?>
-<script type="text/javascript">
-function toggleChecked(status) { jQuery(".dropboxfile").each( function() { jQuery(this).attr("checked",status); } ) }
-</script>
-		<?php
-		echo '<ul><li><input type="checkbox" onclick="toggleChecked(this.checked)"> Select / Deselect All</li>';
-		foreach($files as $file) {
-			echo "<li><input type='checkbox' class='dropboxfile' name='dropboxfiles[]' value='{$file['path']}'></input> {$file['path']}</li>";
-		}
-		echo '</ul>';
-	} else {
-		echo '<ul><li>No image files found in this Dropbox directory.</li></ul>';
-	}
-	*/
-	
 	submit_button('Sideload these images');
 ?>
 </form>
@@ -165,7 +116,7 @@ function dbsideload_check_auth() {
 		<ol>
 		<li>Visit <a href="https://www.dropbox.com/developers/apps" target="_blank">https://www.dropbox.com/developers/apps</a> and Click "Create an App". <br>(You'll need to have a Dropbox account to do this.)</li>
 		<li>Give it a name and description. This will be displayed to users when they authorize Dropbox to talk to this website.</li>
-		<li>Select "Full Dropbox" so that the plugin can access all of the user's files (for finding the images they want to upload).</li>
+		<li>Select <strong>"Full Dropbox"</strong> so that the plugin can access all of the user's files (for finding the images they want to upload). This is important, the plugin will not work with only "folder access", you must change this from the default setting.</li>
 		<li>After the app has been created, copy the App Key and App Secret into the boxes below, and Save.</li>
 		<li>Note: You can leave the App in "Development" status on Dropbox, unless other people than you need to access their own Dropboxes using the plugin. Nobody will be able to access the Dropbox of another person using this plugin, only their own.</li>
 		</ol>
@@ -275,6 +226,7 @@ function dbsideload_check_sideload($post_id) {
 			echo '</li>';
 		}
 		echo '</ul>';
+		echo '<p>You can find the new images in your Media Library.</p>';
 		
 		remove_filter('https_ssl_verify','__return_false');
 	}
@@ -306,6 +258,8 @@ window.close();
 }
 
 function dbsideload_jstree() {
+	global $wp_version;
+
 	wp_enqueue_script('jquery-jstree', plugins_url('/js/jquery.jstree.js',__FILE__), array('jquery'), '1.0-rc3');
 
 	$config = array();
@@ -344,20 +298,50 @@ function dbsideload_jstree() {
 		)
 	);
 	
-	$config['plugins'] = array('themes','json_data','ui','types','checkbox');
+	$config['plugins'] = array('themes','json_data','ui','types','checkbox', 'sort');
 
+	$config['sort'] = 'function(a, b) { return parseFloat(jQuery(a).attr("priority")) > parseFloat(jQuery(b).attr("priority")) ? 1 : -1; }';
+
+	
+	if ( version_compare( $wp_version, '3.5', '>=' ) ) {
 	?>
-	<div id="dropboxtree">
+	<div id="dbsideloadpreviewpane" style="right:0; width:200px; position:fixed;">
+		<p>Selected image information</p>
+		<img id="dbsideloadpreview" src="" />
+		<div id="dbsideloadpreviewinfo">
+		</div>
+	</div>
+	<?php } ?>
+	
+	<div id="dbsideloadtree">
 	<noscript><p>If you're seeing this, then you have Javascript disabled. Please enable Javascript.</p></noscript>
 	</div>
 	
 	<script type="text/javascript">
 	jQuery(document).ready( function() {
-		jQuery("#dropboxtree").jstree(<?php echo dbsideload_json_encode_jsfunc($config); ?>);
+		jQuery("#dbsideloadtree").jstree(<?php echo dbsideload_json_encode_jsfunc($config); ?>)
+		<?php if ( version_compare( $wp_version, '3.5', '>=' ) ) { ?>
+		.bind("select_node.jstree", function (event, data) {
+			var selectedObj = data.rslt.obj;
+			if ( selectedObj.attr("thumbnail") ) {
+				jQuery("#dbsideloadpreview").attr("src", "<?php echo add_query_arg( 
+					array('action' => 'dbsideload_get_thumb' ), admin_url( 'admin-ajax.php' ) ); 
+					?>&path=" + selectedObj.attr("id") );
+				jQuery("#dbsideloadpreviewinfo").html('');
+				if ( selectedObj.attr("modified") ) {
+					jQuery("#dbsideloadpreviewinfo").append('<p>Modified: ' + selectedObj.attr("modified") + '</p>');
+				}
+				if ( selectedObj.attr("mimetype") ) {
+					jQuery("#dbsideloadpreviewinfo").append('<p>Type: ' + selectedObj.attr("mimetype") + '</p>');
+				}
+				if ( selectedObj.attr("size") ) {
+					jQuery("#dbsideloadpreviewinfo").append('<p>Size: ' + selectedObj.attr("size") + '</p>');
+				}
+			}
+		}) <?php } ?>;
 	});
 	</script>
 	<?php
-
 }
 
 add_action('wp_ajax_dbsideload_get_dir', 'dbsideload_ajax_get_dir');
@@ -375,8 +359,8 @@ function dbsideload_ajax_get_dir() {
 		exit;
 	}
 
-	if (empty($_POST['path'])) $_POST['path'] = '/';
-	$path = $_POST['path'];
+	if (empty($_REQUEST['path'])) $_REQUEST['path'] = '/';
+	$path = $_REQUEST['path'];
 	
 	$folder = $dropbox->getMetaData($path);
 
@@ -384,17 +368,19 @@ function dbsideload_ajax_get_dir() {
 	$files = array();
 
 	$data = array();
-	
+
 	foreach ($folder['contents'] as $item) {
 		if ($item['is_dir']) $dirs[] = $item;
 		else if (!preg_match('/[^\?]+\.(jpg|JPG|jpe|JPE|jpeg|JPEG|gif|GIF|png|PNG)/', $item['path'])) continue; //only show images
 		else $files[] = $item;
 	}
+	
+	$priority = 1;
 
 	if (!empty($dirs)) {
 		foreach($dirs as $dir) {
 			$data[] = array(
-				'attr'=>array('id'=>$dir['path']),
+				'attr'=>array('id'=>$dir['path'], 'priority' => $priority++, 'thumbnail'=>0),
 				'data'=>array(
 					'title'=>$dir['path']
 					),
@@ -410,7 +396,12 @@ function dbsideload_ajax_get_dir() {
 			else if (preg_match('/[^\?]+\.(gif|GIF)/', $file['path'])) $type = 'gif';
 			
 			$data[] = array(
-				'attr'=>array('rel'=>$type, 'id'=>$file['path']),
+				'attr'=>array('rel'=>$type, 'id'=>$file['path'], 'priority' => $priority++, 
+					'thumbnail'=> $file['thumb_exists'] ? 1:0,
+					'modified' => date_i18n( get_option('date_format') , strtotime($file['modified']) ),
+					'mimetype' => $file['mime_type'],
+					'size' => $file['size'],
+					),
 				'data'=>array(
 					'title'=>$file['path'],
 				),
@@ -419,6 +410,46 @@ function dbsideload_ajax_get_dir() {
 	}
 
 	echo json_encode($data);
+	exit;
+}
+
+
+add_action('wp_ajax_dbsideload_get_thumb', 'dbsideload_ajax_get_thumb');
+
+function dbsideload_ajax_get_thumb() {
+
+	if (empty($_REQUEST['path'])) {
+		status_header( 404 );
+		exit;
+	}
+	$path = $_REQUEST['path'];
+
+	if (!preg_match('/[^\?]+\.(jpg|JPG|jpe|JPE|jpeg|JPEG|gif|GIF|png|PNG)/', $path)) { 
+		status_header( 404 );
+		exit;
+	}
+	
+	global $dbsideload_oauth, $dropbox;
+	
+	$user = wp_get_current_user();
+	
+	$tokens = get_user_meta($user->ID, 'dbsideload_tokens', true);
+	
+	if ( $tokens['type'] == 'auth' ) {
+		$dbsideload_oauth->setToken($tokens);
+	} else {
+		exit;
+	}
+
+	if (empty($_REQUEST['path'])) $_REQUEST['path'] = '/';
+	$path = $_REQUEST['path'];
+	
+	$thumbnail = $dropbox->getThumbnail($path, 'm');
+	
+	status_header( 200 );
+	header('Content-Type: image/jpeg');
+	echo $thumbnail;
+	
 	exit;
 }
 
