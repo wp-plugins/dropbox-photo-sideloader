@@ -3,7 +3,7 @@
 Plugin Name: Dropbox Photo Sideloader
 Plugin URI: http://ottopress.com/wordpress-plugins/dropbox-photo-sideloader/
 Description: Adds a new tab to the Media Uploader, which allows you to pull image files from your Dropbox into WordPress.
-Version: 0.5
+Version: 0.6
 Author: Otto
 Author URI: http://ottopress.com
 License: GPLv2
@@ -216,7 +216,7 @@ function dbsideload_check_sideload($post_id) {
 			if (!isset($tempurl['url'])) continue;
 			
 			echo "<li>Sideloading {$file} ... ";
-			$result = media_sideload_image(urldecode($tempurl['url']), $post_id);
+			$result = media_sideload_image($tempurl['url'], $post_id);
 			if (is_wp_error($result)) {
 				echo 'Error when sideloading.<br />';
 				echo $result->get_error_message();

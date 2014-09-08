@@ -1,8 +1,8 @@
 === Dropbox Photo Sideloader === 
 Contributors: Audrey, Otto42
 Tags: dropbox, sideload, image, photo, media
-Requires at least: 3.4
-Tested up to: 3.5
+Requires at least: 4.0
+Tested up to: 4.0
 Stable Tag: trunk
 License: GPLv2
 License URI: http://www.opensource.org/licenses/GPL-2.0
@@ -16,7 +16,6 @@ Adds a new tab to the Add media screen, allowing you to pull images from Dropbox
 After sideloading an image into WordPress, you'll find it in the Media Library and available for use in Galleries, or as images in the Post, or just whatever you like. It's just as if you uploaded them manually.
 
 Note that sideloading many images at once may take more time than your webserver will allow. If this happens, just sideload them in smaller groups.
-
 
 Credits:
 
@@ -56,10 +55,11 @@ So if you don't see the loading message appear and then have the directory struc
 1. Authorization screen
 2. Files ready for sideloading
 
-== Upgrade Notice ==
-Added new preview box in the media uploader for WordPress 3.5 users.
-
 == Changelog ==
+
+= 0.6 =
+* WordPress Core now handles spaces in sideloaded images, allowing me to fix this issue in the plugin. Ref: https://core.trac.wordpress.org/ticket/16330
+* TODO: Support new media library properly with JS, instead of using the backwards-compatibility functionality.
 
 = 0.5 =
 
